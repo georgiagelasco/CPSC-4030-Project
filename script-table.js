@@ -32,8 +32,8 @@ d3.csv("covid.csv").then(
         })
 
     var yScale = d3.scaleLinear()
-        .domain()
-        .range()
+        .domain([0, maxSum])
+        .range([dimentions.height - dimentions.margin.bottom, dimentions.margin.top])
 
     //create axis
     var xAxis = d3.azisBottom(xScale).tickFormat(d3.format("d"))
@@ -41,22 +41,22 @@ d3.csv("covid.csv").then(
 
     //append axis _
     svg.append("g")
-    .attr()
-        .call()
-        .append()
-        .attr()
-        .attr()
+    .attr("transform", `translate(0, ${dimensions.height - dimensions.margin.bottom})`)
+        .call(xAxis)
+        .append("text")
+        .attr("x", dimensions.width /2)
+        .attr("y", 40)
         .attr("fill", black)
         .text("age")
 
     //apend y axis |
     svg.append("g")
-    .attr()
-        .call()
-        .append()
-        .attr()
-        .attr()
-        .attr()
+    .attr("transform", `translate(${dimensions.margin.left}, 0)`)
+        .call(yAxis)
+        .append("text")
+        .attr("x", -dimensions.width /2)
+        .attr("y", -35)
+        .attr("transform", "rotate(-90)")
         .attr("fill", "black")
         .text("number of covid cases")
 
@@ -68,11 +68,11 @@ d3.csv("covid.csv").then(
         .append("rect")
         .attr("class", "bar")
         //scalse
-        .attr()
-        .attr()
+        .attr("x", d => xScale(+d.age))
+        .attr("y", d=> yScale(keys.reduce((sum,key) => sum + +d[key], 0)))
         //height & width
         .attr("width", 10)
-        .attr("height", d => dimentions.height - dimentions.margin.bottom - ------- )
+        .attr("height", d => dimentions.height - dimentions.margin.bottom - - yScale(keys.reduce((sum, key) => sum + +d[key], 0)))
         .attr("fill", "red")
 
     }
