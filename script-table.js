@@ -1,6 +1,6 @@
 d3.csv("covid.csv").then(
     function(dataset){
-        var dimentions = {
+        var dimensions = {
             width: 1000,
             height: 1000,
             margin:{
@@ -16,13 +16,13 @@ d3.csv("covid.csv").then(
             .style("height", dimensions.height)
 
         var xScale = d3.scaleLinear()
-            .domain()
-            .ranege()
+            .domain(dataset.map(d => d.age_group))
+            .range([dimensions.margin.left, dimensions.width - dimensions.margin.right])
 
 
         //this is to get the number of data 
         //****this may not be correct reusing info
-        var keys = dataset.columns.slice(1)
+        var keys = Object.keys(dataset[0]).slice(1)
         var maxSum = d3.max(dataset, function(d){
             var sumAge = 0
             for(var i = 0; i < keys.length; ++i){
@@ -33,11 +33,11 @@ d3.csv("covid.csv").then(
 
     var yScale = d3.scaleLinear()
         .domain([0, maxSum])
-        .range([dimentions.height - dimentions.margin.bottom, dimentions.margin.top])
+        .range([dimensions.height - dimensions.margin.bottom, dimensions.margin.top])
 
     //create axis
-    var xAxis = d3.azisBottom(xScale).tickFormat(d3.format("d"))
-    var yAxis = d3.azisLeft(yScale)
+    var xAxis = d3.axisBottom(xScale).tickFormat(d3.format("d"))
+    var yAxis = d3.axisLeft(yScale)
 
     //append axis _
     svg.append("g")
@@ -46,7 +46,7 @@ d3.csv("covid.csv").then(
         .append("text")
         .attr("x", dimensions.width /2)
         .attr("y", 40)
-        .attr("fill", black)
+        .attr("fill", "black")
         .text("age")
 
     //apend y axis |
@@ -58,7 +58,7 @@ d3.csv("covid.csv").then(
         .attr("y", -35)
         .attr("transform", "rotate(-90)")
         .attr("fill", "black")
-        .text("number of covid cases")
+        .text("Number of COVID Cases")
 
 
     //draw bars
@@ -68,11 +68,11 @@ d3.csv("covid.csv").then(
         .append("rect")
         .attr("class", "bar")
         //scalse
-        .attr("x", d => xScale(+d.age))
-        .attr("y", d=> yScale(keys.reduce((sum,key) => sum + +d[key], 0)))
+        .attr("x", d => xScale(d.age_group))
+        .attr("y", d => yScale(keys.reduce((sum, key) => sum + +d[key], 0)))
         //height & width
         .attr("width", 10)
-        .attr("height", d => dimentions.height - dimentions.margin.bottom - - yScale(keys.reduce((sum, key) => sum + +d[key], 0)))
+        .attr("height", d => dimensions.height - dimensions.margin.bottom - yScale(keys.reduce((sum, key) => sum + +d[key], 0)))
         .attr("fill", "red")
 
     }
