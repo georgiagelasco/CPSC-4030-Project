@@ -1,0 +1,5 @@
+Run setup.py to download the covid data
+
+Install python
+type pip install requests in powershell
+type "python setup.py" 
