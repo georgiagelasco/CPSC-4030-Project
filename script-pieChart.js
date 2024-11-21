@@ -4,7 +4,7 @@ d3.csv("covid.csv").then(
         var dimensions = {
             width: 500,
             height: 500,
-            radius : Math.min(width, height) / 2
+            radius : Math.min(500, 500) / 2
         }
 
         var sexCounts = d3.rollup(
@@ -16,10 +16,10 @@ d3.csv("covid.csv").then(
         var sexData = Array.from(sexCounts, ([key, value]) => ({ sex: key, count: value }))
 
        var svg = d3.select("#piechart")
-            .attr("width", width)
-            .attr("height", height)
+            .attr("width", dimensions.width)
+            .attr("height", dimensions.height)
             .append("g")
-            .attr("transform", `translate(${width / 2}, ${height / 2})`)
+            .attr("transform", `translate(${dimensions.width / 2}, ${dimensions.height / 2})`)
 
         //color
         var color = d3.scaleOrdinal()
@@ -32,7 +32,7 @@ d3.csv("covid.csv").then(
 
         var arc = d3.arc()
             .innerRadius(0)
-            .outerRadius(radius)
+            .outerRadius(dimensions.radius)
 
         //draw chart
         svg.selectAll("path")

@@ -17,10 +17,10 @@ d3.csv("covid.csv").then(
 
         const svg = d3.select("#heatmap")
             .append("svg")
-            .attr("width", width + margin.left + margin.right)
-            .attr("height", height + margin.top + margin.bottom)
+            .attr("width", dimensions.width + dimensions.margin.left + dimensions.margin.right)
+            .attr("height", dimensions.height + dimensions.margin.top + dimensions.margin.bottom)
             .append("g")
-            .attr("transform", `translate(${margin.left},${margin.top})`);
+            .attr("transform", `translate(${dimensions.margin.left},${dimensions.margin.top})`);
 
         //count occrrences
         var counts = d3.rollup(
@@ -58,10 +58,10 @@ d3.csv("covid.csv").then(
             .enter()
             .append("rect")
             //x and y dimentions
-            .attr("x", d => d.colIndex * cellSize)
-            .attr("y", d => d.rowIndex * cellSize)
-            .attr("width", cellSize)
-            .attr("height", cellSize)
+            .attr("x", d => d.colIndex * dimensions.cellSize)
+            .attr("y", d => d.rowIndex * dimensions.cellSize)
+            .attr("width", dimensions.cellSize)
+            .attr("height", dimensions.cellSize)
             .style("fill", d => colorScale(d.count))
             .style("stroke", "#ccc");
 
@@ -77,7 +77,7 @@ d3.csv("covid.csv").then(
             .data(raceEthnicities)
             .enter()
             .append("text")
-            .attr("x", (_, i) => i * cellSize + cellSize / 2)
+            .attr("x", (_, i) => i * dimensions.cellSize + dimensions.cellSize / 2)
             .attr("y", -5)
             .attr("text-anchor", "middle")
             .attr("font-size", "10px")
@@ -89,7 +89,7 @@ d3.csv("covid.csv").then(
             .enter()
             .append("text")
             .attr("x", -5)
-            .attr("y", (_, i) => i * cellSize + cellSize / 2)
+            .attr("y", (_, i) => i * dimensions.cellSize + dimensions.cellSize / 2)
             .attr("text-anchor", "end")
             .attr("font-size", "10px")
             .text(d => d);
