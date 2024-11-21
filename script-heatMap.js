@@ -3,11 +3,11 @@
 d3.csv("covid.csv").then(
     function(data){
         var dimensions = {
-            margin : {top: 20, right: 20, bottom: 20, left: 20},
+            margin : {top: 50, right: 100, bottom: 50, left: 100},
             //ccellSize = XXX;
             width : 500, //data[0].length * cellSize;
             height : 450, //data.length * cellSize;
-            cellSize : 50
+            cellSize : 100
         }
 
 
@@ -69,8 +69,8 @@ d3.csv("covid.csv").then(
 
 
         //labels
-        var xScale = d3.scaleBand().domain(raceEthnicities).range([0, raceEthnicities.length * cellSize])
-        var yScale = d3.scaleBand().domain(ageGroups).range([0, ageGroups.length * cellSize])
+        var xScale = d3.scaleBand().domain(raceEthnicities).range([0, raceEthnicities.length * dimensions.cellSize])
+        var yScale = d3.scaleBand().domain(ageGroups).range([0, ageGroups.length * dimensions.cellSize])
 
         svg.append("g")
             .selectAll("text")

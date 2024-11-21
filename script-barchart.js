@@ -24,10 +24,13 @@ d3.csv("covid.csv").then(function(dataset) {
             ageGroupCounts[ageGroup] = 1;
         }
     });
+    var get_domain = Object.keys(ageGroupCounts)
+
+    var sorted_dom = get_domain.sort((a,b) => a.charAt(0) - b.charAt(0))
 
     // Set up xScale using scaleBand for categorical data
     var xScale = d3.scaleBand()
-        .domain(Object.keys(ageGroupCounts)) // Use age group keys from the dictionary
+        .domain(sorted_dom) // Use age group keys from the dictionary
         .range([dimensions.margin.left, dimensions.width - dimensions.margin.right])
         .padding(0.1); // Add padding between bars
 
