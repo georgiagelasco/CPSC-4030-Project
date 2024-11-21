@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html>
   <head>
@@ -6,34 +5,54 @@
     <title>Milestone 3 D3</title>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <style>
-      
-      #piechart {
-          width: 500px;  
-          height: 500px; 
-          margin: auto; 
+      /* Common styles for all charts */
+      svg {
+        width: 500px;
+        height: 500px;
+        display: none; /* Hide all charts by default */
+        margin: auto;
       }
-      #barchart {
-            width: 500px;
-            height: 500px;
-            margin: auto; 
+      /* Style to display the active chart */
+      .active {
+        display: block;
       }
-      #heatmap {
-        width: 500px;  
-          height: 500px; 
-          margin: auto; 
-        }
-  </style>
+    </style>
   </head>
   <body>
 
     <h1>Milestone 3</h1>
+    
+    <!-- Buttons to switch charts -->
+    <div style="text-align: center; margin-bottom: 20px;">
+      <button onclick="showChart('piechart')">Show Pie Chart</button>
+      <button onclick="showChart('barchart')">Show Bar Chart</button>
+      <button onclick="showChart('heatmap')">Show Heatmap</button>
+    </div>
 
+    <!-- Chart containers -->
     <svg id="barchart"></svg>
     <svg id="heatmap"></svg>
     <svg id="piechart"></svg>
 
-     <script src="script-barchart.js"></script>
-    <script src="script-heatmap.js"></script>
+    <!-- Chart scripts -->
+    <script src="script-barchart.js"></script>
+    <script src="script-heatMap.js"></script>
     <script src="script-pieChart.js"></script>
+
+    <!-- JavaScript to handle button clicks -->
+    <script>
+      function showChart(chartId) {
+        // Hide all charts
+        document.querySelectorAll("svg").forEach(chart => {
+          chart.classList.remove("active");
+        });
+        
+        // Show the selected chart
+        document.getElementById(chartId).classList.add("active");
+      }
+
+      // Initialize by showing the pie chart
+      showChart('piechart');
+    </script>
   </body>
 </html>
