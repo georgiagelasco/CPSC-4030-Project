@@ -1,60 +1,100 @@
-d3.csv("covid.csv").then(
-    function(data){
+d3.csv("covid.csv").then(function(data) {
+    var dimensions = {
+        width: 500,
+        height: 500,
+        radius: Math.min(500, 500) / 2
+    };
 
-        var dimensions = {
-            width: 500,
-            height: 500,
-            radius : Math.min(500, 500) / 2
-        }
+    // Create SVG container
+    var svg = d3.select("#piechart")
+        .attr("width", dimensions.width)
+        .attr("height", dimensions.height)
+        .append("g")
+        .attr("transform", `translate(${dimensions.width / 2}, ${dimensions.height / 2})`);
 
-        var sexCounts = d3.rollup(
+    // Initialize color scale
+    var color = d3.scaleOrdinal(d3.schemeCategory10);
+
+    // Initialize pie and arc generators
+    var pie = d3.pie().value(d => d.count);
+    var arc = d3.arc().innerRadius(0).outerRadius(dimensions.radius);
+
+    // Function to update the pie chart
+    function updateChart(attribute) {
+        // Group data by the selected attribute
+        var groupedData = d3.rollup(
             data,
             v => v.length,
-            d => d.sex
-        )
-        
-        var sexData = Array.from(sexCounts, ([key, value]) => ({ sex: key, count: value }))
+            d => d[attribute]
+        );
 
-       var svg = d3.select("#piechart")
-            .attr("width", dimensions.width)
-            .attr("height", dimensions.height)
-            .append("g")
-            .attr("transform", `translate(${dimensions.width / 2}, ${dimensions.height / 2})`)
+        var filteredData = Array.from(groupedData, ([key, value]) => ({
+            attribute: key,
+            count: value
+        }));
 
-        //color
-        var color = d3.scaleOrdinal()
-            .domain(sexData.map(d => d.sex))
-            .range(d3.schemeCategory10)
+        // Bind data to the pie chart slices
+        var slices = svg.selectAll("path").data(pie(filteredData));
 
-        //creating pie
-        var pie = d3.pie()
-            .value(d => d.count)
-
-        var arc = d3.arc()
-            .innerRadius(0)
-            .outerRadius(dimensions.radius)
-
-        //draw chart
-        svg.selectAll("path")
-            .data(pie(sexData))
-            .enter()
+        // Enter new slices
+        slices.enter()
             .append("path")
+            .merge(slices)
+            .transition()
+            .duration(1000)
             .attr("d", arc)
-            .attr("fill", d => color(d.data.sex))
+            .attr("fill", d => color(d.data.attribute))
             .attr("stroke", "white")
-            .attr("stroke-width", 2)
+            .attr("stroke-width", 2);
 
-        //labels
-        svg.selectAll("text")
-            .data(pie(sexData))
-            .enter()
+        // Remove unused slices
+        slices.exit().remove();
+
+        // Update labels
+        var labels = svg.selectAll("text").data(pie(filteredData));
+
+        labels.enter()
             .append("text")
+            .merge(labels)
+            .transition()
+            .duration(1000)
             .attr("transform", d => `translate(${arc.centroid(d)})`)
             .attr("text-anchor", "middle")
             .style("font-size", "12px")
             .style("fill", "white")
-            .text(d => `${d.data.sex}: ${d.data.count}`);
+            .text(d => `${d.data.attribute}: ${d.data.count}`);
 
-
+        labels.exit().remove();
     }
-)
+
+    // Create a dropdown menu
+    var dropdown = d3.select("body")
+        .insert("div", "#piechart")
+        .style("text-align", "center")
+        .append("select")
+        .on("change", function() {
+            var selectedAttribute = d3.select(this).property("value");
+            updateChart(selectedAttribute);
+        });
+
+    // Populate dropdown with attribute options
+    var attributes = [
+        "sex",
+        "age_group",
+        "race_ethnicity_combined",
+        "hosp_yn",
+        "icu_yn",
+        "death_yn",
+        "medcond_yn"
+    ];
+
+    dropdown.selectAll("option")
+        .data(attributes)
+        .enter()
+        .append("option")
+        .attr("value", d => d)
+        .text(d => d.charAt(0).toUpperCase() + d.slice(1).replace(/_/g, " "));
+
+    // Initialize the chart with the first attribute
+    updateChart("sex");
+});
