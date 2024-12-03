@@ -300,7 +300,7 @@
                   .attr("stroke", "red")
                   .attr("stroke-width", 2);
                     }
-          updateHeatmap();
+          
 
   /*
     // Heatmap Update Function
