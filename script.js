@@ -370,8 +370,9 @@
       .attr("height", yScale.bandwidth())
       .attr("fill", d => colorScale(d.count)); // Ensure `count` exists
   });
+  */
 }
-*/
+
     </script>
   </body>
 </html>
