@@ -282,64 +282,70 @@
           dimensions.height = ageGroups.length * dimensions.cellSize;
 
           const svg = d3.select("#heatmap")
-            .append("svg")
-            .attr("width", dimensions.width + dimensions.margin.left + dimensions.margin.right)
-            .attr("height", dimensions.height + dimensions.margin.top + dimensions.margin.bottom)
-            .append("g")
-            .attr("transform", `translate(${dimensions.margin.left},${dimensions.margin.top})`);
+            .style("width", dimensions.width + "px")
+            .style("height", dimensions.height + "px");
 
-          const counts = d3.rollup(
-            data,
-            v => v.length,
-            d => d.age_group,
-            d => `${d.race} (${d.ethnicity})`
-          );
+          svg.selectAll("*").remove();
 
-          const heatmapData = [];
-          ageGroups.forEach((ageGroup, rowIndex) => {
-            raceEthnicities.forEach((raceEthnicity, colIndex) => {
-              const count = counts.get(ageGroup)?.get(raceEthnicity) || 0;
-              heatmapData.push({ ageGroup, raceEthnicity, rowIndex, colIndex, count });
-            });
-          });
-
-          const maxCount = d3.max(heatmapData, d => d.count);
           const colorScale = d3.scaleSequential(d3.interpolateBlues)
-            .domain([0, maxCount]);
+            .domain([0, d3.max(ageGroups, function(d) {
+              return raceEthnicities.map(function(race) {
+                return data.filter(function(row) {
+                  return row.age_group === d && row.race === race;
+                }).length;
+              });
+            })]);
 
-          svg.selectAll("rect")
-            .data(heatmapData)
+          const grid = svg.append("g");
+
+          grid.selectAll("rect")
+            .data(ageGroups)
+            .enter()
+            .append("g")
+            .attr("transform", function(d, i) {
+              return `translate(0, ${i * dimensions.cellSize})`;
+            })
+            .selectAll("rect")
+            .data(function(ageGroup) {
+              return raceEthnicities.map(function(race) {
+                return {
+                  ageGroup: ageGroup,
+                  race: race,
+                  value: data.filter(function(row) {
+                    return row.age_group === ageGroup && row.race === race;
+                  }).length
+                };
+              });
+            })
             .enter()
             .append("rect")
-            .attr("x", d => d.colIndex * dimensions.cellSize)
-            .attr("y", d => d.rowIndex * dimensions.cellSize)
+            .attr("x", function(d, i) { return i * dimensions.cellSize; })
+            .attr("y", 0)
             .attr("width", dimensions.cellSize)
             .attr("height", dimensions.cellSize)
-            .style("fill", d => colorScale(d.count))
-            .style("stroke", "#ccc");
+            .attr("fill", d => colorScale(d.value))
+            .attr("stroke", "white");
 
-          svg.selectAll(".colLabel")
+          // Labels for the heatmap
+          svg.selectAll(".xLabel")
             .data(raceEthnicities)
             .enter()
             .append("text")
-            .attr("class", "colLabel")
-            .attr("x", (_, i) => i * dimensions.cellSize + dimensions.cellSize / 2)
-            .attr("y", -10)
+            .attr("class", "xLabel")
+            .attr("x", (d, i) => i * dimensions.cellSize + dimensions.cellSize / 2)
+            .attr("y", dimensions.height - 10)
             .attr("text-anchor", "middle")
-            .attr("font-size", "12px")
-            .attr("fill", "black")
             .text(d => d);
 
-          svg.selectAll(".rowLabel")
+          svg.selectAll(".yLabel")
             .data(ageGroups)
             .enter()
             .append("text")
-            .attr("class", "rowLabel")
-            .attr("x", -10)
-            .attr("y", (_, i) => i * dimensions.cellSize + dimensions.cellSize / 2)
-            .attr("text-anchor", "end")
-            .attr("font-size", "12px")
-            .attr("fill", "black")
+            .attr("class", "yLabel")
+            .attr("x", 0)
+            .attr("y", (d, i) => i * dimensions.cellSize + dimensions.cellSize / 2)
+            .attr("dy", ".35em")
+            .attr("text-anchor", "middle")
             .text(d => d);
         });
       }
