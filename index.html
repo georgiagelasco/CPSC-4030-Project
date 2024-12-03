@@ -1,31 +1,136 @@
+<!DOCTYPE html>
+<html>
   <head>
-    <meta charset="UTF-8"/>
-    <title>Milestone 3 D3</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Covid-19 Data Visualization</title>
     <script src="https://d3js.org/d3.v7.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
     <style>
-      
-      #piechart {
-          width: 500px;  
-          height: 500px; 
-          margin: 0 auto; 
+      /* Common styles for all charts */
+      body {
+        background-color: #ADD8E6;
+        font-family: 'Roboto', sans-serif;
+        color: #333;
+        text-align: center;
+        margin: 0;
+        padding: 0;
       }
-      
-  </style>
+      h1 {
+        margin: 20px 0;
+        font-size: 2em;
+        color: #222;
+      }
+      button {
+        padding: 10px 20px;
+        margin: 5px;
+        border: none;
+        background-color: #007BFF;
+        color: white;
+        font-size: 1em;
+        cursor: pointer;
+        border-radius: 5px;
+        transition: background-color 0.3s;
+      }
+      button:hover {
+        background-color: #0056b3;
+      }
+      button.active-button {
+        background-color: #4CAF50;
+        color: white;
+      }
+      svg {
+        width: 90%;
+        height: auto;
+        display: none;
+        margin: auto;
+      }
+      .active {
+        display: block;
+      }
+      #dropdown-container {
+        margin-top: 10px;
+        display: none;
+      }
+      select {
+        padding: 5px;
+        font-size: 1em;
+        margin-bottom: 20px;
+      }
+    </style>
   </head>
   <body>
-
-    <h1>Milestone 3</h1>
-
+    <h1>Covid-19 Data Visualization</h1>
+    <div>
+      <button onclick="showChart('piechart', event)" aria-label="Show Pie Chart">Show Pie Chart</button>
+      <button onclick="showChart('barchart', event)" aria-label="Show Bar Chart">Show Bar Chart</button>
+      <button onclick="showChart('heatmap', event)" aria-label="Show Heatmap">Show Heatmap</button>
+    </div>
+    <div id="dropdown-container">
+      <label for="chart-dropdown">Choose an attribute: </label>
+      <select id="chart-dropdown" onchange="updateDropdownSelection()"></select>
+    </div>
     <svg id="barchart"></svg>
     <svg id="heatmap"></svg>
-    <!-- <svg id="barchart"></svg> -->
-    <!--<svg id="heatmap"></svg>-->
     <svg id="piechart"></svg>
 
+    <!-- Include the JavaScript files for each chart -->
+    <script src="script-piechart.js"></script>
+    <script src="script-barchart.js"></script>
+    <script src="script-heatmap.js"></script>
 
-    <!-- <script src="script-table.js"></script> -->
-    <!-- <script src="script-heatmap.js"></script> -->
-    <!-- <script src="script-pieChart.js"></script> -->
-    <script src="script-pieChart.js"></script>
+    <script>
+      function showChart(chartId, event) {
+        document.querySelectorAll("svg").forEach(chart => {
+          chart.classList.remove("active");
+        });
+        document.querySelectorAll("button").forEach(button => {
+          button.classList.remove("active-button");
+        });
+
+        document.getElementById(chartId).classList.add("active");
+        event.target.classList.add("active-button");
+
+        const dropdownContainer = document.getElementById("dropdown-container");
+        if (chartId === "piechart" || chartId === "barchart") {
+          dropdownContainer.style.display = "block";
+          populateDropdown();
+        } else {
+          dropdownContainer.style.display = "none";
+        }
+      }
+
+      function updateDropdownSelection() {
+        const dropdown = document.getElementById("chart-dropdown");
+        const selectedValue = dropdown.value;
+
+        if (document.getElementById("piechart").classList.contains("active")) {
+          updatePieChart(selectedValue);
+        } else if (document.getElementById("barchart").classList.contains("active")) {
+          updateBarChart(selectedValue);
+        }
+      }
+
+      function populateDropdown() {
+        const dropdown = document.getElementById("chart-dropdown");
+        if (!dropdown.options.length) {
+          const attributes = [
+            "sex", "age_group", "race_ethnicity_combined", "hosp_yn", "icu_yn", "death_yn", "medcond_yn"
+          ];
+
+          dropdown.innerHTML = "";
+          attributes.forEach(attr => {
+            const option = document.createElement("option");
+            option.value = attr;
+            option.textContent = attr.charAt(0).toUpperCase() + attr.slice(1).replace(/_/g, " ");
+            dropdown.appendChild(option);
+          });
+
+          dropdown.value = attributes[0];
+        }
+      }
+
+      showChart('piechart');
+    </script>
   </body>
 </html>
