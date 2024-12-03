@@ -285,14 +285,20 @@
 
 
           function updateHeatmap(){
-              svg.append("rect")
-                .attr("x", 50)
-                .attr("y", 50)
-                .attr("width", 200)
-                .attr("height", 100)
-                .attr("fill", "blue")
-                .attr("stroke", "red")
-                .attr("stroke-width", 2);
+              const svg = d3.select("#heatmap")
+                  .append("svg")
+                  .attr("width", 500) // Set the canvas size
+                  .attr("height", 500);
+
+                // Append a rectangle to the SVG
+                svg.append("rect")
+                   .attr("x", 50)       // X position
+                   .attr("y", 50)       // Y position
+                   .attr("width", 200)  // Width of the rectangle
+                   .attr("height", 100) // Height of the rectangle
+                   .attr("fill", "blue") // Fill color
+                   .attr("stroke", "red") // Border color
+                   .attr("stroke-width", 2); // Border thickness
           }
 
   /*
