@@ -282,6 +282,32 @@
           dimensions.height = ageGroups.length * dimensions.cellSize;
 
 
+
+
+          function updateHeatmap(){
+              c3.csv("covid.csv).then(function(data){
+                     const dimentions = {
+                      margin: {margin: { top: 50, bottom: 100, right: 50, left: 100 },
+                      cellSize: 50,
+                      width: 0,
+                      height: 0
+                    };
+                const svg = d3.select("#heatmap")
+          .style("width", dimensions.width + "px")
+          .style("height", dimensions.height + "px")
+          .append("svg")
+          .attr("width", dimensions.width)
+          .attr("height", dimensions.height)
+          .append("rect")
+          .attr("x", 0)
+          .attr("y", 0)
+          .attr("width", dimensions.width)
+          .attr("height", dimensions.height)
+          .attr("fill", "#cccccc")
+          .attr("stroke", "black")
+          .attr("stroke-width", 2);
+          }
+
   /*
     // Heatmap Update Function
       function updateHeatmap() {
