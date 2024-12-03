@@ -265,6 +265,33 @@
         });
       }
 
+  // Placeholder Rectangle for Heatmap
+      function updateHeatmap() {
+        const dimensions = {
+          width: 800,
+          height: 400
+        };
+
+        const svg = d3.select("#heatmap")
+          .style("width", dimensions.width + "px")
+          .style("height", dimensions.height + "px")
+          .append("svg")
+          .attr("width", dimensions.width)
+          .attr("height", dimensions.height)
+          .append("rect")
+          .attr("x", 0)
+          .attr("y", 0)
+          .attr("width", dimensions.width)
+          .attr("height", dimensions.height)
+          .attr("fill", "#cccccc")
+          .attr("stroke", "black")
+          .attr("stroke-width", 2);
+      }
+
+      // Call the function to display a placeholder rectangle for the heatmap
+      updateHeatmap();
+
+/*
       function updateHeatmap() {
   d3.csv("covid.csv").then(function(data) {
     const dimensions = {
@@ -344,7 +371,7 @@
       .attr("fill", d => colorScale(d.count)); // Ensure `count` exists
   });
 }
-
+*/
     </script>
   </body>
 </html>
