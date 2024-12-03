@@ -282,7 +282,7 @@
           dimensions.height = ageGroups.length * dimensions.cellSize;
 
 
-
+  /*
     // Heatmap Update Function
       function updateHeatmap() {
         d3.csv("covid.csv").then(function(data) {
@@ -367,6 +367,7 @@
             .text(d => d);
         });
       }
+          */
     </script>
   </body>
 </html>
