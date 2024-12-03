@@ -1,110 +1,85 @@
-d3.csv("covid.csv").then(function (dataset) {
-    var dimensions = {
+function updateBarChart(attribute) {
+    d3.csv("covid.csv").then(function(data) {
+      var dimensions = {
         width: 1000,
         height: 600,
         margin: {
-            top: 10,
-            bottom: 50,
-            right: 10,
-            left: 50,
-        },
-    };
-
-    // Create SVG container
-    var svg = d3.select("#barchart")
+          top: 10,
+          bottom: 50,
+          right: 10,
+          left: 50
+        }
+      };
+  
+      var svg = d3.select("#barchart")
         .style("width", dimensions.width)
         .style("height", dimensions.height);
+        svg.selectAll("*").remove(); // Clears all elements before rendering new ones
 
-    // Add dropdown for attribute selection
-    var dropdown = d3.select("body")
-        .insert("div", "#barchart")
-        .style("text-align", "center")
-        .append("select")
-        .on("change", function () {
-            var selectedAttribute = d3.select(this).property("value");
-            updateChart(selectedAttribute);
-        });
-
-    // Available attributes for grouping
-    var attributes = [
-        "age_group",
-        "sex",
-        "race_ethnicity_combined",
-        "hosp_yn",
-        "icu_yn",
-        "death_yn",
-    ];
-
-    // Populate dropdown
-    dropdown
-        .selectAll("option")
-        .data(attributes)
+  
+      // Clear previous bars before rendering new ones
+      svg.selectAll(".bar").remove(); // Remove all previous bars
+  
+      // Initialize an empty dictionary to store counts
+      var attributeCounts = {};
+      data.forEach(row => {
+        var attributeValue = row[attribute]; // Use selected attribute
+        if (attributeCounts[attributeValue]) {
+          attributeCounts[attributeValue]++;
+        } else {
+          attributeCounts[attributeValue] = 1;
+        }
+      });
+  
+      // Sort data by count
+      var sortedData = Object.entries(attributeCounts)
+        .sort((a, b) => b[1] - a[1]); // Sort by count in descending order
+  
+      // Set up xScale using scaleBand for categorical data
+      var xScale = d3.scaleBand()
+        .domain(sortedData.map(d => d[0])) // Use attribute values
+        .range([dimensions.margin.left, dimensions.width - dimensions.margin.right])
+        .padding(0.1);
+  
+      // Set up yScale based on the maximum count
+      var yScale = d3.scaleLinear()
+        .domain([0, d3.max(sortedData, d => d[1])])
+        .range([dimensions.height - dimensions.margin.bottom, dimensions.margin.top]);
+  
+      // Create x-axis
+      var xAxis = d3.axisBottom(xScale);
+      svg.append("g")
+        .attr("transform", `translate(0, ${dimensions.height - dimensions.margin.bottom})`)
+        .call(xAxis)
+        .append("text")
+        .attr("x", dimensions.width / 2)
+        .attr("y", 40)
+        .attr("fill", "black")
+        .text(attribute.charAt(0).toUpperCase() + attribute.slice(1).replace(/_/g, " "));
+  
+      // Create y-axis
+      var yAxis = d3.axisLeft(yScale);
+      svg.append("g")
+        .attr("transform", `translate(${dimensions.margin.left}, 0)`)
+        .call(yAxis)
+        .append("text")
+        .attr("x", -dimensions.height / 2)
+        .attr("y", -35)
+        .attr("transform", "rotate(-90)")
+        .attr("fill", "black")
+        .text("Count");
+  
+      // Draw bars using attributeCounts
+      svg.selectAll(".bar")
+        .data(sortedData)
         .enter()
-        .append("option")
-        .attr("value", (d) => d)
-        .text((d) => d.charAt(0).toUpperCase() + d.slice(1).replace(/_/g, " "));
-
-    // Initialize scales
-    var xScale = d3.scaleBand().range([dimensions.margin.left, dimensions.width - dimensions.margin.right]).padding(0.1);
-    var yScale = d3.scaleLinear().range([dimensions.height - dimensions.margin.bottom, dimensions.margin.top]);
-
-    // Create axes
-    var xAxisGroup = svg
-        .append("g")
-        .attr("transform", `translate(0, ${dimensions.height - dimensions.margin.bottom})`);
-
-    var yAxisGroup = svg.append("g").attr("transform", `translate(${dimensions.margin.left}, 0)`);
-
-    // Function to update the chart
-    function updateChart(attribute) {
-        // Group data by the selected attribute
-        var groupedData = d3.rollup(
-            dataset,
-            (v) => v.length,
-            (d) => d[attribute]
-        );
-
-        var data = Array.from(groupedData, ([key, value]) => ({
-            key: key || "Unknown", // Handle missing data
-            value: value,
-        }));
-
-        // Sort data alphabetically
-        data.sort((a, b) => d3.ascending(a.key, b.key));
-
-        // Update scales
-        xScale.domain(data.map((d) => d.key));
-        yScale.domain([0, d3.max(data, (d) => d.value)]);
-
-        // Update axes
-        xAxisGroup.call(d3.axisBottom(xScale));
-        yAxisGroup.call(d3.axisLeft(yScale));
-
-        // Bind data to bars
-        var bars = svg.selectAll(".bar").data(data);
-
-        // Enter new bars
-        bars
-            .enter()
-            .append("rect")
-            .attr("class", "bar")
-            .attr("x", (d) => xScale(d.key))
-            .attr("y", (d) => yScale(d.value))
-            .attr("width", xScale.bandwidth())
-            .attr("height", (d) => dimensions.height - dimensions.margin.bottom - yScale(d.value))
-            .attr("fill", "red")
-            .merge(bars) // Update existing bars
-            .transition()
-            .duration(1000)
-            .attr("x", (d) => xScale(d.key))
-            .attr("y", (d) => yScale(d.value))
-            .attr("width", xScale.bandwidth())
-            .attr("height", (d) => dimensions.height - dimensions.margin.bottom - yScale(d.value));
-
-        // Remove unused bars
-        bars.exit().remove();
-    }
-
-    // Initialize the chart with the first attribute
-    updateChart("age_group");
-});
+        .append("rect")
+        .attr("class", "bar")
+        .attr("x", d => xScale(d[0])) // d[0] is the attribute value
+        .attr("y", d => yScale(d[1])) // d[1] is the count
+        .attr("width", xScale.bandwidth()) // Set bar width based on scaleBand
+        .attr("height", d => dimensions.height - dimensions.margin.bottom - yScale(d[1]))
+        .attr("fill", "red");
+    });
+  }
+  
