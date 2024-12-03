@@ -133,7 +133,7 @@
         }
 
         // Lazy load the corresponding script
-        loadScript(`script-${chartId}.js`, () => {
+        loadScript("script.js", () => {
           console.log(`Script for ${chartId} loaded.`);
         });
       }
@@ -181,5 +181,8 @@
       // Initialize by showing the pie chart
       showChart('piechart');
     </script>
+
+    <!-- Link to the external script file -->
+    <script src="script.js"></script>
   </body>
 </html>
