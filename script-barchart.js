@@ -1,4 +1,4 @@
-d3.csv("covid.csv").then(function(dataset) {
+d3.csv("covid.csv").then(function (dataset) {
     var dimensions = {
         width: 1000,
         height: 600,
@@ -6,71 +6,105 @@ d3.csv("covid.csv").then(function(dataset) {
             top: 10,
             bottom: 50,
             right: 10,
-            left: 50
-        }
+            left: 50,
+        },
     };
 
+    // Create SVG container
     var svg = d3.select("#barchart")
         .style("width", dimensions.width)
         .style("height", dimensions.height);
 
-    // Initialize an empty dictionary to store counts
-    var ageGroupCounts = {};
-    dataset.forEach(row => {
-        var ageGroup = row.age_group; // Assuming 'age_group' is the column name
-        if (ageGroupCounts[ageGroup]) {
-            ageGroupCounts[ageGroup]++;
-        } else {
-            ageGroupCounts[ageGroup] = 1;
-        }
-    });
-    var get_domain = Object.keys(ageGroupCounts)
+    // Add dropdown for attribute selection
+    var dropdown = d3.select("body")
+        .insert("div", "#barchart")
+        .style("text-align", "center")
+        .append("select")
+        .on("change", function () {
+            var selectedAttribute = d3.select(this).property("value");
+            updateChart(selectedAttribute);
+        });
 
-    var sorted_dom = get_domain.sort((a,b) => a.charAt(0) - b.charAt(0))
+    // Available attributes for grouping
+    var attributes = [
+        "age_group",
+        "sex",
+        "race_ethnicity_combined",
+        "hosp_yn",
+        "icu_yn",
+        "death_yn",
+    ];
 
-    // Set up xScale using scaleBand for categorical data
-    var xScale = d3.scaleBand()
-        .domain(sorted_dom) // Use age group keys from the dictionary
-        .range([dimensions.margin.left, dimensions.width - dimensions.margin.right])
-        .padding(0.1); // Add padding between bars
-
-    // Set up yScale based on the maximum count
-    var yScale = d3.scaleLinear()
-        .domain([0, d3.max(Object.values(ageGroupCounts))])
-        .range([dimensions.height - dimensions.margin.bottom, dimensions.margin.top]);
-
-    // Create x-axis
-    var xAxis = d3.axisBottom(xScale);
-    svg.append("g")
-        .attr("transform", `translate(0, ${dimensions.height - dimensions.margin.bottom})`)
-        .call(xAxis)
-        .append("text")
-        .attr("x", dimensions.width / 2)
-        .attr("y", 40)
-        .attr("fill", "black")
-        .text("Age Bracket");
-
-    // Create y-axis
-    var yAxis = d3.axisLeft(yScale);
-    svg.append("g")
-        .attr("transform", `translate(${dimensions.margin.left}, 0)`)
-        .call(yAxis)
-        .append("text")
-        .attr("x", -dimensions.height / 2)
-        .attr("y", -35)
-        .attr("transform", "rotate(-90)")
-        .attr("fill", "black")
-        .text("Number of COVID Cases");
-
-    // Draw bars using ageGroupCounts
-    svg.selectAll(".bar")
-        .data(Object.entries(ageGroupCounts)) // Convert dictionary to array of [key, value] pairs
+    // Populate dropdown
+    dropdown
+        .selectAll("option")
+        .data(attributes)
         .enter()
-        .append("rect")
-        .attr("class", "bar")
-        .attr("x", d => xScale(d[0])) // d[0] is the age group
-        .attr("y", d => yScale(d[1])) // d[1] is the count
-        .attr("width", xScale.bandwidth()) // Set bar width based on scaleBand
-        .attr("height", d => dimensions.height - dimensions.margin.bottom - yScale(d[1]))
-        .attr("fill", "red");
+        .append("option")
+        .attr("value", (d) => d)
+        .text((d) => d.charAt(0).toUpperCase() + d.slice(1).replace(/_/g, " "));
+
+    // Initialize scales
+    var xScale = d3.scaleBand().range([dimensions.margin.left, dimensions.width - dimensions.margin.right]).padding(0.1);
+    var yScale = d3.scaleLinear().range([dimensions.height - dimensions.margin.bottom, dimensions.margin.top]);
+
+    // Create axes
+    var xAxisGroup = svg
+        .append("g")
+        .attr("transform", `translate(0, ${dimensions.height - dimensions.margin.bottom})`);
+
+    var yAxisGroup = svg.append("g").attr("transform", `translate(${dimensions.margin.left}, 0)`);
+
+    // Function to update the chart
+    function updateChart(attribute) {
+        // Group data by the selected attribute
+        var groupedData = d3.rollup(
+            dataset,
+            (v) => v.length,
+            (d) => d[attribute]
+        );
+
+        var data = Array.from(groupedData, ([key, value]) => ({
+            key: key || "Unknown", // Handle missing data
+            value: value,
+        }));
+
+        // Sort data alphabetically
+        data.sort((a, b) => d3.ascending(a.key, b.key));
+
+        // Update scales
+        xScale.domain(data.map((d) => d.key));
+        yScale.domain([0, d3.max(data, (d) => d.value)]);
+
+        // Update axes
+        xAxisGroup.call(d3.axisBottom(xScale));
+        yAxisGroup.call(d3.axisLeft(yScale));
+
+        // Bind data to bars
+        var bars = svg.selectAll(".bar").data(data);
+
+        // Enter new bars
+        bars
+            .enter()
+            .append("rect")
+            .attr("class", "bar")
+            .attr("x", (d) => xScale(d.key))
+            .attr("y", (d) => yScale(d.value))
+            .attr("width", xScale.bandwidth())
+            .attr("height", (d) => dimensions.height - dimensions.margin.bottom - yScale(d.value))
+            .attr("fill", "red")
+            .merge(bars) // Update existing bars
+            .transition()
+            .duration(1000)
+            .attr("x", (d) => xScale(d.key))
+            .attr("y", (d) => yScale(d.value))
+            .attr("width", xScale.bandwidth())
+            .attr("height", (d) => dimensions.height - dimensions.margin.bottom - yScale(d.value));
+
+        // Remove unused bars
+        bars.exit().remove();
+    }
+
+    // Initialize the chart with the first attribute
+    updateChart("age_group");
 });

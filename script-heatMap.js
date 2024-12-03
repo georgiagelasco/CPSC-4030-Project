@@ -21,6 +21,7 @@ d3.csv("covid.csv").then(function(data) {
     dimensions.height = ageGroups.length * dimensions.cellSize;
 
     console.log(dimensions.height)
+    console.log(dimensions.width)
 
     // Create SVG container
     const svg = d3.select("#heatmap")

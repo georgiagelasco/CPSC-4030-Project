@@ -1,8 +1,8 @@
 d3.csv("covid.csv").then(function(data) {
     var dimensions = {
-        width: 500,
-        height: 500,
-        radius: Math.min(500, 500) / 2
+        width: 800,  // Increased width
+        height: 800, // Increased height
+        radius: Math.min(800, 800) / 2 * 0.5  // Adjust radius to fit within the larger container
     };
 
     // Create SVG container
@@ -20,52 +20,76 @@ d3.csv("covid.csv").then(function(data) {
     var arc = d3.arc().innerRadius(0).outerRadius(dimensions.radius);
 
     // Function to update the pie chart
-    function updateChart(attribute) {
-        // Group data by the selected attribute
-        var groupedData = d3.rollup(
-            data,
-            v => v.length,
-            d => d[attribute]
-        );
+    // Function to update the pie chart
+function updateChart(attribute) {
+    // Group data by the selected attribute
+    var groupedData = d3.rollup(
+        data,
+        v => v.length,
+        d => d[attribute]
+    );
 
-        var filteredData = Array.from(groupedData, ([key, value]) => ({
-            attribute: key,
-            count: value
-        }));
+    var filteredData = Array.from(groupedData, ([key, value]) => ({
+        attribute: key,
+        count: value
+    }));
 
-        // Bind data to the pie chart slices
-        var slices = svg.selectAll("path").data(pie(filteredData));
+    // Bind data to the pie chart slices
+    var slices = svg.selectAll("path").data(pie(filteredData));
 
-        // Enter new slices
-        slices.enter()
-            .append("path")
-            .merge(slices)
-            .transition()
-            .duration(1000)
-            .attr("d", arc)
-            .attr("fill", d => color(d.data.attribute))
-            .attr("stroke", "white")
-            .attr("stroke-width", 2);
+    // Enter new slices
+    slices.enter()
+        .append("path")
+        .merge(slices)
+        .transition()
+        .duration(1000)
+        .attr("d", arc)
+        .attr("fill", d => color(d.data.attribute))
+        .attr("stroke", "white")
+        .attr("stroke-width", 2);
 
-        // Remove unused slices
-        slices.exit().remove();
+    // Remove unused slices
+    slices.exit().remove();
 
-        // Update labels
-        var labels = svg.selectAll("text").data(pie(filteredData));
+    // Create or update the legend
+   // Create or update the legend
+var total = d3.sum(filteredData, d => d.count); // Calculate total for percentage calculation
 
-        labels.enter()
-            .append("text")
-            .merge(labels)
-            .transition()
-            .duration(1000)
-            .attr("transform", d => `translate(${arc.centroid(d)})`)
-            .attr("text-anchor", "middle")
-            .style("font-size", "12px")
-            .style("fill", "white")
-            .text(d => `${d.data.attribute}: ${d.data.count}`);
+var legend = svg.selectAll(".legend")
+    .data(filteredData);
 
-        labels.exit().remove();
-    }
+// Enter new legend items
+var legendEnter = legend.enter()
+    .append("g")
+    .attr("class", "legend")
+    .attr("transform", (d, i) => `translate(-${dimensions.radius + 400}, ${-dimensions.radius + i * 30})`);
+
+legendEnter.append("rect")
+    .attr("x", dimensions.radius + 10)
+    .attr("y", 0)
+    .attr("width", 18)
+    .attr("height", 18)
+    .attr("fill", d => color(d.attribute));
+
+legendEnter.append("text")
+    .attr("x", dimensions.radius + 35)
+    .attr("y", 9)
+    .attr("dy", "0.35em")
+    .style("text-anchor", "start")
+    .text(d => `${d.attribute}: ${d.count} (${((d.count / total) * 100).toFixed(1)}%)`);
+
+// Update existing legend items
+legend.select("rect")
+    .attr("fill", d => color(d.attribute));
+
+legend.select("text")
+    .text(d => `${d.attribute}: ${d.count} (${((d.count / total) * 100).toFixed(1)}%)`);
+
+// Remove unused legend items
+legend.exit().remove();
+
+}
+
 
     // Create a dropdown menu
     var dropdown = d3.select("body")
@@ -94,6 +118,7 @@ d3.csv("covid.csv").then(function(data) {
         .append("option")
         .attr("value", d => d)
         .text(d => d.charAt(0).toUpperCase() + d.slice(1).replace(/_/g, " "));
+        
 
     // Initialize the chart with the first attribute
     updateChart("sex");

@@ -2,21 +2,57 @@
 <html>
   <head>
     <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Covid-19 Data Visualization</title>
     <script src="https://d3js.org/d3.v7.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
     <style>
       /* Common styles for all charts */
       body {
         background-color: #ADD8E6; /* Soothing light blue */
-        font-family: 'Times New Roman', Times, serif, sans-serif;
+        font-family: 'Roboto', sans-serif;
         color: #333;
+        text-align: center;
+        margin: 0;
+        padding: 0;
       }
+
+      h1 {
+        margin: 20px 0;
+        font-size: 2em;
+        color: #222;
+      }
+
+      /* Buttons styling */
+      button {
+        padding: 10px 20px;
+        margin: 5px;
+        border: none;
+        background-color: #007BFF;
+        color: white;
+        font-size: 1em;
+        cursor: pointer;
+        border-radius: 5px;
+        transition: background-color 0.3s;
+      }
+
+      button:hover {
+        background-color: #0056b3;
+      }
+
+      button.active-button {
+        background-color: #4CAF50; /* Green */
+        color: white;
+      }
+
+      /* Chart containers */
       svg {
-        width: 500px;
-        height: 500px;
+        width: 90%;
+        height: auto;
         display: none; /* Hide all charts by default */
         margin: auto;
       }
+
       /* Style to display the active chart */
       .active {
         display: block;
@@ -27,10 +63,10 @@
     <h1>Covid-19 Data Visualization</h1>
 
     <!-- Buttons to switch charts -->
-    <div style="text-align: center; margin-bottom: 20px;">
-      <button onclick="showChart('piechart')">Show Pie Chart</button>
-      <button onclick="showChart('barchart')">Show Bar Chart</button>
-      <button onclick="showChart('heatmap')">Show Heatmap</button>
+    <div>
+      <button onclick="showChart('piechart')" aria-label="Show Pie Chart">Show Pie Chart</button>
+      <button onclick="showChart('barchart')" aria-label="Show Bar Chart">Show Bar Chart</button>
+      <button onclick="showChart('heatmap')" aria-label="Show Heatmap">Show Heatmap</button>
     </div>
 
     <!-- Chart containers -->
@@ -38,21 +74,40 @@
     <svg id="heatmap"></svg>
     <svg id="piechart"></svg>
 
-    <!-- Chart scripts -->
-    <script src="script-barchart.js"></script>
-    <script src="script-heatMap.js"></script>
-    <script src="script-pieChart.js"></script>
-
-    <!-- JavaScript to handle button clicks -->
+    <!-- JavaScript to handle button clicks and lazy loading -->
     <script>
+      function loadScript(src, callback) {
+        if (!document.querySelector(`script[src="${src}"]`)) {
+          let script = document.createElement('script');
+          script.src = src;
+          script.onload = callback;
+          document.body.appendChild(script);
+        } else if (callback) {
+          callback();
+        }
+      }
+
       function showChart(chartId) {
         // Hide all charts
         document.querySelectorAll("svg").forEach(chart => {
           chart.classList.remove("active");
         });
 
+        // Remove 'active' class from all buttons
+        document.querySelectorAll("button").forEach(button => {
+          button.classList.remove("active-button");
+        });
+
         // Show the selected chart
         document.getElementById(chartId).classList.add("active");
+
+        // Highlight the corresponding button
+        event.target.classList.add("active-button");
+
+        // Lazy load the corresponding script
+        loadScript(`script-${chartId}.js`, () => {
+          console.log(`Script for ${chartId} loaded.`);
+        });
       }
 
       // Initialize by showing the pie chart
