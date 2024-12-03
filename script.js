@@ -267,82 +267,88 @@
 
       // Heatmap Update Function
       function updateHeatmap() {
-  d3.csv("covid.csv").then(function (data) {
-    const dimensions = {
-      margin: { top: 50, bottom: 100, right: 50, left: 100 },
-      cellSize: 50,
-      width: 0,
-      height: 0,
-    };
+        d3.csv("covid.csv").then(function(data) {
+          const dimensions = {
+            margin: { top: 50, bottom: 100, right: 50, left: 100 },
+            cellSize: 50,
+            width: 0,
+            height: 0
+          };
 
-    const ageGroups = Array.from(new Set(data.map(d => d.age_group)));
-    const raceEthnicities = Array.from(new Set(data.map(d => `${d.race} (${d.ethnicity})`)));
+          const ageGroups = Array.from(new Set(data.map(d => d.age_group)));
+          const raceEthnicities = Array.from(new Set(data.map(d => `${d.race} (${d.ethnicity})`)));
 
-    dimensions.width = raceEthnicities.length * dimensions.cellSize;
-    dimensions.height = ageGroups.length * dimensions.cellSize;
+          dimensions.width = raceEthnicities.length * dimensions.cellSize;
+          dimensions.height = ageGroups.length * dimensions.cellSize;
 
-    const svg = d3.select("#heatmap")
-      .append("svg")
-      .attr("width", dimensions.width + dimensions.margin.left + dimensions.margin.right)
-      .attr("height", dimensions.height + dimensions.margin.top + dimensions.margin.bottom)
-      .append("g")
-      .attr("transform", `translate(${dimensions.margin.left}, ${dimensions.margin.top})`);
+          const svg = d3.select("#heatmap")
+            .style("width", dimensions.width + "px")
+            .style("height", dimensions.height + "px");
 
-    const heatmapData = {};
-    data.forEach(row => {
-      const ageGroup = row.age_group;
-      const raceEthnicity = `${row.race} (${row.ethnicity})`;
-      heatmapData[`${ageGroup}-${raceEthnicity}`] = (heatmapData[`${ageGroup}-${raceEthnicity}`] || 0) + 1;
-    });
+          svg.selectAll("*").remove();
 
-    const cells = ageGroups.flatMap(ageGroup =>
-      raceEthnicities.map(raceEthnicity => ({
-        ageGroup,
-        raceEthnicity,
-        value: heatmapData[`${ageGroup}-${raceEthnicity}`] || 0,
-      }))
-    );
+          const colorScale = d3.scaleSequential(d3.interpolateBlues)
+            .domain([0, d3.max(ageGroups, function(d) {
+              return raceEthnicities.map(function(race) {
+                return data.filter(function(row) {
+                  return row.age_group === d && row.race === race;
+                }).length;
+              });
+            })]);
 
-    const maxValue = d3.max(cells, d => d.value);
+          const grid = svg.append("g");
 
-    const colorScale = d3.scaleSequential(d3.interpolateBlues).domain([0, maxValue]);
+          grid.selectAll("rect")
+            .data(ageGroups)
+            .enter()
+            .append("g")
+            .attr("transform", function(d, i) {
+              return `translate(0, ${i * dimensions.cellSize})`;
+            })
+            .selectAll("rect")
+            .data(function(ageGroup) {
+              return raceEthnicities.map(function(race) {
+                return {
+                  ageGroup: ageGroup,
+                  race: race,
+                  value: data.filter(function(row) {
+                    return row.age_group === ageGroup && row.race === race;
+                  }).length
+                };
+              });
+            })
+            .enter()
+            .append("rect")
+            .attr("x", function(d, i) { return i * dimensions.cellSize; })
+            .attr("y", 0)
+            .attr("width", dimensions.cellSize)
+            .attr("height", dimensions.cellSize)
+            .attr("fill", d => colorScale(d.value))
+            .attr("stroke", "white");
 
-    svg.selectAll(".cell")
-      .data(cells)
-      .enter()
-      .append("rect")
-      .attr("x", d => raceEthnicities.indexOf(d.raceEthnicity) * dimensions.cellSize)
-      .attr("y", d => ageGroups.indexOf(d.ageGroup) * dimensions.cellSize)
-      .attr("width", dimensions.cellSize)
-      .attr("height", dimensions.cellSize)
-      .attr("fill", d => colorScale(d.value))
-      .attr("stroke", "white");
+          // Labels for the heatmap
+          svg.selectAll(".xLabel")
+            .data(raceEthnicities)
+            .enter()
+            .append("text")
+            .attr("class", "xLabel")
+            .attr("x", (d, i) => i * dimensions.cellSize + dimensions.cellSize / 2)
+            .attr("y", dimensions.height - 10)
+            .attr("text-anchor", "middle")
+            .text(d => d);
 
-    // X-axis labels
-    svg.selectAll(".xLabel")
-      .data(raceEthnicities)
-      .enter()
-      .append("text")
-      .attr("class", "xLabel")
-      .attr("x", (d, i) => i * dimensions.cellSize + dimensions.cellSize / 2)
-      .attr("y", dimensions.height + 10)
-      .attr("text-anchor", "middle")
-      .text(d => d);
-
-    // Y-axis labels
-    svg.selectAll(".yLabel")
-      .data(ageGroups)
-      .enter()
-      .append("text")
-      .attr("class", "yLabel")
-      .attr("x", -10)
-      .attr("y", (d, i) => i * dimensions.cellSize + dimensions.cellSize / 2)
-      .attr("dy", ".35em")
-      .attr("text-anchor", "end")
-      .text(d => d);
-  });
-}
-
+          svg.selectAll(".yLabel")
+            .data(ageGroups)
+            .enter()
+            .append("text")
+            .attr("class", "yLabel")
+            .attr("x", 0)
+            .attr("y", (d, i) => i * dimensions.cellSize + dimensions.cellSize / 2)
+            .attr("dy", ".35em")
+            .attr("text-anchor", "middle")
+            .text(d => d);
+        });
+      }
     </script>
   </body>
 </html>
