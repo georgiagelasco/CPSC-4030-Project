@@ -265,90 +265,86 @@
         });
       }
 
-      // Heatmap Update Function
       function updateHeatmap() {
-        d3.csv("covid.csv").then(function(data) {
-          const dimensions = {
-            margin: { top: 50, bottom: 100, right: 50, left: 100 },
-            cellSize: 50,
-            width: 0,
-            height: 0
-          };
+  d3.csv("covid.csv").then(function(data) {
+    const dimensions = {
+      margin: { top: 50, bottom: 100, right: 50, left: 100 },
+      cellSize: 50,
+      width: 0,
+      height: 0
+    };
 
-          const ageGroups = Array.from(new Set(data.map(d => d.age_group)));
-          const raceEthnicities = Array.from(new Set(data.map(d => `${d.race} (${d.ethnicity})`)));
+    // Get unique age groups and race/ethnicity categories
+    const ageGroups = Array.from(new Set(data.map(d => d.age_group)));
+    const raceEthnicities = Array.from(new Set(data.map(d => `${d.race} (${d.ethnicity})`)));
 
-          dimensions.width = raceEthnicities.length * dimensions.cellSize;
-          dimensions.height = ageGroups.length * dimensions.cellSize;
+    dimensions.width = raceEthnicities.length * dimensions.cellSize;
+    dimensions.height = ageGroups.length * dimensions.cellSize;
 
-          const svg = d3.select("#heatmap")
-            .style("width", dimensions.width + "px")
-            .style("height", dimensions.height + "px");
+    console.log("Dimensions: ", dimensions);
+    console.log("Age Groups: ", ageGroups);
+    console.log("Race Ethnicities: ", raceEthnicities);
 
-          svg.selectAll("*").remove();
+    const svg = d3.select("#heatmap")
+      .style("width", dimensions.width + dimensions.left + dimensions.right + "px")
+      .style("height", dimensions.height + dimensions.top + dimensions.bottom + "px")
+      .append("svg")
+      .attr("width", dimensions.width + dimensions.left + dimensions.right)
+      .attr("height", dimensions.height + dimensions.top + dimensions.bottom)
+      .append("g")
+      .attr("transform", `translate(${dimensions.left}, ${dimensions.top})`);
 
-          const colorScale = d3.scaleSequential(d3.interpolateBlues)
-            .domain([0, d3.max(ageGroups, function(d) {
-              return raceEthnicities.map(function(race) {
-                return data.filter(function(row) {
-                  return row.age_group === d && row.race === race;
-                }).length;
-              });
-            })]);
+    // Create scales for the axes
+    const xScale = d3.scaleBand()
+      .domain(raceEthnicities)
+      .range([0, dimensions.width])
+      .padding(0.01);
 
-          const grid = svg.append("g");
+    const yScale = d3.scaleBand()
+      .domain(ageGroups)
+      .range([0, dimensions.height])
+      .padding(0.01);
 
-          grid.selectAll("rect")
-            .data(ageGroups)
-            .enter()
-            .append("g")
-            .attr("transform", function(d, i) {
-              return `translate(0, ${i * dimensions.cellSize})`;
-            })
-            .selectAll("rect")
-            .data(function(ageGroup) {
-              return raceEthnicities.map(function(race) {
-                return {
-                  ageGroup: ageGroup,
-                  race: race,
-                  value: data.filter(function(row) {
-                    return row.age_group === ageGroup && row.race === race;
-                  }).length
-                };
-              });
-            })
-            .enter()
-            .append("rect")
-            .attr("x", function(d, i) { return i * dimensions.cellSize; })
-            .attr("y", 0)
-            .attr("width", dimensions.cellSize)
-            .attr("height", dimensions.cellSize)
-            .attr("fill", d => colorScale(d.value))
-            .attr("stroke", "white");
+    svg.append("g")
+      .selectAll(".x-axis")
+      .data(raceEthnicities)
+      .enter()
+      .append("text")
+      .attr("class", "x-axis")
+      .attr("x", (d, i) => xScale(d) + xScale.bandwidth() / 2)
+      .attr("y", -10)
+      .attr("text-anchor", "middle")
+      .text(d => d);
 
-          // Labels for the heatmap
-          svg.selectAll(".xLabel")
-            .data(raceEthnicities)
-            .enter()
-            .append("text")
-            .attr("class", "xLabel")
-            .attr("x", (d, i) => i * dimensions.cellSize + dimensions.cellSize / 2)
-            .attr("y", dimensions.height - 10)
-            .attr("text-anchor", "middle")
-            .text(d => d);
+    svg.append("g")
+      .selectAll(".y-axis")
+      .data(ageGroups)
+      .enter()
+      .append("text")
+      .attr("class", "y-axis")
+      .attr("x", -10)
+      .attr("y", (d, i) => yScale(d) + yScale.bandwidth() / 2)
+      .attr("dy", ".35em")
+      .attr("text-anchor", "end")
+      .text(d => d);
 
-          svg.selectAll(".yLabel")
-            .data(ageGroups)
-            .enter()
-            .append("text")
-            .attr("class", "yLabel")
-            .attr("x", 0)
-            .attr("y", (d, i) => i * dimensions.cellSize + dimensions.cellSize / 2)
-            .attr("dy", ".35em")
-            .attr("text-anchor", "middle")
-            .text(d => d);
-        });
-      }
+    // Create the heatmap cells
+    const colorScale = d3.scaleSequential(d3.interpolateYlOrRd)
+      .domain([0, d3.max(data, d => d.count)]); // Ensure `count` is a numeric field
+
+    svg.selectAll(".cell")
+      .data(data)
+      .enter()
+      .append("rect")
+      .attr("class", "cell")
+      .attr("x", d => xScale(`${d.race} (${d.ethnicity})`))
+      .attr("y", d => yScale(d.age_group))
+      .attr("width", xScale.bandwidth())
+      .attr("height", yScale.bandwidth())
+      .attr("fill", d => colorScale(d.count)); // Ensure `count` exists
+  });
+}
+
     </script>
   </body>
 </html>
