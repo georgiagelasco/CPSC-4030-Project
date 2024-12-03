@@ -145,7 +145,7 @@
             .attr("width", dimensions.width)
             .attr("height", dimensions.height)
             .append("g")
-            .attr("transform", translate(${dimensions.width / 2}, ${dimensions.height / 2}));
+            .attr("transform", `translate(${dimensions.width / 2}, ${dimensions.height / 2})`);
           
           const color = d3.scaleOrdinal(d3.schemeCategory10);
           const pie = d3.pie().value(d => d.count);
@@ -175,7 +175,7 @@
           const legendEnter = legend.enter()
             .append("g")
             .attr("class", "legend")
-            .attr("transform", (d, i) => translate(-${dimensions.radius + 400}, ${-dimensions.radius + i * 30}));
+            .attr("transform", (d, i) => `translate(-${dimensions.radius + 400}, ${-dimensions.radius + i * 30})`);
 
           legendEnter.append("rect")
             .attr("x", dimensions.radius + 10)
@@ -189,13 +189,13 @@
             .attr("y", 9)
             .attr("dy", "0.35em")
             .style("text-anchor", "start")
-            .text(d => ${d.attribute}: ${d.count} (${((d.count / total) * 100).toFixed(1)}%));
+            .text(d => `${d.attribute}: ${d.count} (${((d.count / total) * 100).toFixed(1)}%)`);
 
           legend.select("rect")
             .attr("fill", d => color(d.attribute));
 
           legend.select("text")
-            .text(d => ${d.attribute}: ${d.count} (${((d.count / total) * 100).toFixed(1)}%));
+            .text(d => `${d.attribute}: ${d.count} (${((d.count / total) * 100).toFixed(1)}%)`);
 
           legend.exit().remove();
         });
@@ -234,7 +234,7 @@
             .range([dimensions.height - dimensions.margin.bottom, dimensions.margin.top]);
 
           svg.append("g")
-            .attr("transform", translate(0, ${dimensions.height - dimensions.margin.bottom}))
+            .attr("transform", `translate(0, ${dimensions.height - dimensions.margin.bottom})`)
             .call(d3.axisBottom(xScale))
             .append("text")
             .attr("x", dimensions.width / 2)
@@ -243,7 +243,7 @@
             .text(attribute.charAt(0).toUpperCase() + attribute.slice(1).replace(/_/g, " "));
 
           svg.append("g")
-            .attr("transform", translate(${dimensions.margin.left}, 0))
+            .attr("transform", `translate(${dimensions.margin.left}, 0)`)
             .call(d3.axisLeft(yScale))
             .append("text")
             .attr("x", -dimensions.height / 2)
@@ -276,118 +276,73 @@
           };
 
           const ageGroups = Array.from(new Set(data.map(d => d.age_group)));
-          const raceEthnicities = Array.from(new Set(data.map(d => ${d.race} (${d.ethnicity}))));
-
-          dimensions.width = raceEthnicities.length * dimensions.cellSize;
-          dimensions.height = ageGroups.length * dimensions.cellSize;
-
-
-
-
-          function updateHeatmap(){
-              d3.select("#heatmap").classed("active", true);
-
-              // Select the existing SVG or append one
-              const svg = d3.select("#heatmap");
-          
-              // Append a rectangle
-              svg.append("rect")
-                  .attr("x", 50)
-                  .attr("y", 50)
-                  .attr("width", 200)
-                  .attr("height", 100)
-                  .attr("fill", "blue")
-                  .attr("stroke", "red")
-                  .attr("stroke-width", 2);
-                    }
-          
-
-  /*
-    // Heatmap Update Function
-      function updateHeatmap() {
-        d3.csv("covid.csv").then(function(data) {
-          const dimensions = {
-            margin: { top: 50, bottom: 100, right: 50, left: 100 },
-            cellSize: 50,
-            width: 0,
-            height: 0
-          };
-
-          const ageGroups = Array.from(new Set(data.map(d => d.age_group)));
           const raceEthnicities = Array.from(new Set(data.map(d => `${d.race} (${d.ethnicity})`)));
 
           dimensions.width = raceEthnicities.length * dimensions.cellSize;
           dimensions.height = ageGroups.length * dimensions.cellSize;
 
           const svg = d3.select("#heatmap")
-            .style("width", dimensions.width + "px")
-            .style("height", dimensions.height + "px");
-
-          svg.selectAll("*").remove();
-
-          const colorScale = d3.scaleSequential(d3.interpolateBlues)
-            .domain([0, d3.max(ageGroups, function(d) {
-              return raceEthnicities.map(function(race) {
-                return data.filter(function(row) {
-                  return row.age_group === d && row.race === race;
-                }).length;
-              });
-            })]);
-
-          const grid = svg.append("g");
-
-          grid.selectAll("rect")
-            .data(ageGroups)
-            .enter()
+            .append("svg")
+            .attr("width", dimensions.width + dimensions.margin.left + dimensions.margin.right)
+            .attr("height", dimensions.height + dimensions.margin.top + dimensions.margin.bottom)
             .append("g")
-            .attr("transform", function(d, i) {
-              return `translate(0, ${i * dimensions.cellSize})`;
-            })
-            .selectAll("rect")
-            .data(function(ageGroup) {
-              return raceEthnicities.map(function(race) {
-                return {
-                  ageGroup: ageGroup,
-                  race: race,
-                  value: data.filter(function(row) {
-                    return row.age_group === ageGroup && row.race === race;
-                  }).length
-                };
-              });
-            })
+            .attr("transform", `translate(${dimensions.margin.left},${dimensions.margin.top})`);
+
+          const counts = d3.rollup(
+            data,
+            v => v.length,
+            d => d.age_group,
+            d => `${d.race} (${d.ethnicity})`
+          );
+
+          const heatmapData = [];
+          ageGroups.forEach((ageGroup, rowIndex) => {
+            raceEthnicities.forEach((raceEthnicity, colIndex) => {
+              const count = counts.get(ageGroup)?.get(raceEthnicity) || 0;
+              heatmapData.push({ ageGroup, raceEthnicity, rowIndex, colIndex, count });
+            });
+          });
+
+          const maxCount = d3.max(heatmapData, d => d.count);
+          const colorScale = d3.scaleSequential(d3.interpolateBlues)
+            .domain([0, maxCount]);
+
+          svg.selectAll("rect")
+            .data(heatmapData)
             .enter()
             .append("rect")
-            .attr("x", function(d, i) { return i * dimensions.cellSize; })
-            .attr("y", 0)
+            .attr("x", d => d.colIndex * dimensions.cellSize)
+            .attr("y", d => d.rowIndex * dimensions.cellSize)
             .attr("width", dimensions.cellSize)
             .attr("height", dimensions.cellSize)
-            .attr("fill", d => colorScale(d.value))
-            .attr("stroke", "white");
+            .style("fill", d => colorScale(d.count))
+            .style("stroke", "#ccc");
 
-          // Labels for the heatmap
-          svg.selectAll(".xLabel")
+          svg.selectAll(".colLabel")
             .data(raceEthnicities)
             .enter()
             .append("text")
-            .attr("class", "xLabel")
-            .attr("x", (d, i) => i * dimensions.cellSize + dimensions.cellSize / 2)
-            .attr("y", dimensions.height - 10)
+            .attr("class", "colLabel")
+            .attr("x", (_, i) => i * dimensions.cellSize + dimensions.cellSize / 2)
+            .attr("y", -10)
             .attr("text-anchor", "middle")
+            .attr("font-size", "12px")
+            .attr("fill", "black")
             .text(d => d);
 
-          svg.selectAll(".yLabel")
+          svg.selectAll(".rowLabel")
             .data(ageGroups)
             .enter()
             .append("text")
-            .attr("class", "yLabel")
-            .attr("x", 0)
-            .attr("y", (d, i) => i * dimensions.cellSize + dimensions.cellSize / 2)
-            .attr("dy", ".35em")
-            .attr("text-anchor", "middle")
+            .attr("class", "rowLabel")
+            .attr("x", -10)
+            .attr("y", (_, i) => i * dimensions.cellSize + dimensions.cellSize / 2)
+            .attr("text-anchor", "end")
+            .attr("font-size", "12px")
+            .attr("fill", "black")
             .text(d => d);
         });
       }
-          */
     </script>
   </body>
 </html>
