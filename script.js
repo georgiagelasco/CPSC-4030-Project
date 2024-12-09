@@ -254,8 +254,7 @@ function updateHeatmap() {
             .attr("font-size", "12px")
             .attr("fill", "black")
             .text(d => d)
-            .on("click", function(event, d){
-                d3.select(this).style("fill", "gray")
+            
             });
 
         // Add labels for rows (age groups)
