@@ -135,15 +135,14 @@ function updateBarChart(attribute) {
                 var bar = d3.select(this);
                 var count = d[1];
             
-                // Check if the bar is already active (green)
+                // Toggle the fill color between green and red
                 var isActive = bar.attr("fill") === "green";
                 var newColor = isActive ? "red" : "green";
                 bar.attr("fill", newColor);
             
-                // Remove all text elements
-                svg.selectAll("text").remove();
+                // Remove the previous text if "unclicked"
+                bar.select("text").remove();
             
-                // Add the number text if the bar is clicked and not already active
                 if (!isActive) {
                     svg.append("text")
                         .attr("x", xScale(d[0]) + xScale.bandwidth() / 2)
@@ -153,6 +152,7 @@ function updateBarChart(attribute) {
                         .text(count);
                 }
             });
+
     });
 }
 
